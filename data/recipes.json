@@ -1,0 +1,92 @@
+[
+  {
+    "id": "r1",
+    "title": "Tomato Onion Rice",
+    "ingredients": ["rice", "tomato", "onion", "oil", "salt"],
+    "steps": ["Wash rice", "Chop tomato and onion", "Cook rice with tomato and onion"],
+    "nutrition": {"calories": 400, "protein": 8},
+    "cook_time": 25,
+    "contains_meat": false
+  },
+  {
+    "id": "r2",
+    "title": "Vegetable Pulao",
+    "ingredients": ["rice", "carrot", "peas", "beans", "salt", "ghee"],
+    "steps": ["Wash rice", "Add veggies", "Cook together in pressure cooker"],
+    "nutrition": {"calories": 420, "protein": 9},
+    "cook_time": 20,
+    "contains_meat": false
+  },
+  {
+    "id": "r3",
+    "title": "Masala Omelette",
+    "ingredients": ["egg", "onion", "tomato", "chili", "salt"],
+    "steps": ["Beat eggs", "Add chopped onion, tomato, chili", "Fry in pan"],
+    "nutrition": {"calories": 280, "protein": 12},
+    "cook_time": 10,
+    "contains_meat": false
+  },
+  {
+    "id": "r4",
+    "title": "Grilled Chicken",
+    "ingredients": ["chicken", "garlic", "pepper", "salt", "oil"],
+    "steps": ["Marinate chicken", "Grill until golden"],
+    "nutrition": {"calories": 600, "protein": 40},
+    "cook_time": 30,
+    "contains_meat": true
+  },
+  {
+    "id": "r5",
+    "title": "Paneer Butter Masala",
+    "ingredients": ["paneer", "tomato", "cream", "butter", "onion"],
+    "steps": ["Blend tomato and onion", "Add butter and paneer", "Cook 10 min"],
+    "nutrition": {"calories": 500, "protein": 15},
+    "cook_time": 15,
+    "contains_meat": false
+  },
+  {
+    "id": "r6",
+    "title": "Veg Sandwich",
+    "ingredients": ["bread", "tomato", "onion", "cucumber", "butter"],
+    "steps": ["Spread butter", "Add sliced veggies", "Toast lightly"],
+    "nutrition": {"calories": 250, "protein": 6},
+    "cook_time": 5,
+    "contains_meat": false
+  },
+  {
+    "id": "r7",
+    "title": "Fruit Salad",
+    "ingredients": ["apple", "banana", "grapes", "honey"],
+    "steps": ["Chop fruits", "Mix and drizzle honey"],
+    "nutrition": {"calories": 180, "protein": 2},
+    "cook_time": 5,
+    "contains_meat": false
+  },
+  {
+    "id": "r8",
+    "title": "Aloo Fry",
+    "ingredients": ["potato", "oil", "salt", "turmeric"],
+    "steps": ["Chop potatoes", "Fry till golden"],
+    "nutrition": {"calories": 320, "protein": 4},
+    "cook_time": 12,
+    "contains_meat": false
+  },
+  {
+    "id": "r9",
+    "title": "Curd Rice",
+    "ingredients": ["rice", "curd", "salt", "mustard"],
+    "steps": ["Mix curd with rice", "Add seasoning"],
+    "nutrition": {"calories": 380, "protein": 9},
+    "cook_time": 10,
+    "contains_meat": false
+  },
+  {
+    "id": "r10",
+    "title": "Pasta Arrabiata",
+    "ingredients": ["pasta", "tomato", "garlic", "salt", "oil"],
+    "steps": ["Boil pasta", "Add spicy tomato sauce"],
+    "nutrition": {"calories": 480, "protein": 10},
+    "cook_time": 18,
+    "contains_meat": false
+  }
+]
