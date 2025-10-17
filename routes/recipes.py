@@ -1,5 +1,4 @@
 from openai import AzureOpenAI
-from dotenv import load_dotenv
 import os
 import json
 from fastapi import APIRouter, HTTPException
@@ -9,14 +8,29 @@ from typing import List, Optional
 # ---------------------------
 # 🔧 Azure OpenAI Configuration
 # ---------------------------
-load_dotenv()
 
+# Load .env only in local environment
+if os.getenv("RAILWAY_ENVIRONMENT") is None:
+    from dotenv import load_dotenv
+    load_dotenv()
+    print("🧩 Loaded .env file (local environment)")
+else:
+    print("🚀 Running in Railway environment — using system variables")
+
+# Debug: Check environment variable availability
+print("🔍 Checking Azure environment variables:")
+print("  AZURE_OPENAI_KEY =", bool(os.getenv("AZURE_OPENAI_KEY")))
+print("  AZURE_OPENAI_ENDPOINT =", bool(os.getenv("AZURE_OPENAI_ENDPOINT")))
+print("  AZURE_OPENAI_DEPLOYMENT =", bool(os.getenv("AZURE_OPENAI_DEPLOYMENT")))
+
+# Initialize Azure OpenAI Client
 client = AzureOpenAI(
     api_key=os.getenv("AZURE_OPENAI_KEY"),
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_version="2024-05-01-preview"
+    api_version="2024-08-01-preview"  # ✅ Updated API version
 )
-deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")  # e.g. "gpt-4o" or your deployment name
+
+deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")  # e.g., "gpt-4o" or "gpt-4o-mini"
 
 # ---------------------------
 # 📦 FastAPI Router and Schemas
@@ -91,7 +105,7 @@ def generate_mock_recipe(data: RecipeRequest) -> RecipeResponse:
 
         content = response.choices[0].message.content.strip()
 
-        # ✅ Try to extract valid JSON from any text
+        # ✅ Try to extract valid JSON
         try:
             json_start = content.find("{")
             json_end = content.rfind("}") + 1
@@ -102,13 +116,11 @@ def generate_mock_recipe(data: RecipeRequest) -> RecipeResponse:
             print("🔍 Raw response content:", content)
             raise Exception("Invalid JSON format from Azure GPT")
 
-        # ✅ Validate with Pydantic
         recipe = RecipeResponse(**data_json)
         return recipe
 
     except Exception as e:
         print("⚠️ Azure GPT error:", e)
-        # fallback static recipe
         return RecipeResponse(
             title="Fallback Quick Dish",
             ingredients=[Ingredient(name=i, qty="1 cup") for i in data.pantry],
