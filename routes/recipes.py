@@ -37,15 +37,18 @@ deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")  # e.g., "gpt-4o" or "gpt-4o-m
 # ---------------------------
 router = APIRouter(prefix="/recipes", tags=["Recipes"])
 
+
 class Constraint(BaseModel):
     time_minutes: Optional[int] = None
     equipment: Optional[List[str]] = None
     cuisine: Optional[str] = None
 
+
 class Ingredient(BaseModel):
     name: str
     confidence: Optional[float] = None
     qty: Optional[str] = None
+
 
 class RecipeRequest(BaseModel):
     pantry: List[str]
@@ -54,11 +57,13 @@ class RecipeRequest(BaseModel):
     constraints: Optional[Constraint] = None
     mode: Optional[str] = "creative"
 
+
 class Nutrition(BaseModel):
     calories: float
     protein: float
     carbs: float
     fat: float
+
 
 class RecipeResponse(BaseModel):
     title: str
@@ -69,6 +74,7 @@ class RecipeResponse(BaseModel):
     estimated_time_minutes: Optional[int]
     confidence: float
     explanation: str
+
 
 # ---------------------------
 # 🧠 Recipe Generator Logic (Azure GPT)
@@ -94,6 +100,8 @@ def generate_mock_recipe(data: RecipeRequest) -> RecipeResponse:
       "confidence": 0.9,
       "explanation": "short reasoning"
     }}
+    Do not include any extra text, explanation, or markdown formatting.
+    Respond with only valid JSON.
     """
 
     try:
@@ -105,11 +113,15 @@ def generate_mock_recipe(data: RecipeRequest) -> RecipeResponse:
 
         content = response.choices[0].message.content.strip()
 
-        # ✅ Try to extract valid JSON
+        # ✅ Robust JSON extraction (handles markdown & extra text)
         try:
             json_start = content.find("{")
             json_end = content.rfind("}") + 1
             json_str = content[json_start:json_end]
+
+            # Remove Markdown wrappers or extra formatting
+            json_str = json_str.replace("```json", "").replace("```", "").strip()
+
             data_json = json.loads(json_str)
         except Exception as parse_err:
             print("⚠️ JSON parse error:", parse_err)
@@ -131,6 +143,7 @@ def generate_mock_recipe(data: RecipeRequest) -> RecipeResponse:
             confidence=0.6,
             explanation="Fallback recipe (Azure GPT unavailable)."
         )
+
 
 # ---------------------------
 # 🚀 API Endpoint
