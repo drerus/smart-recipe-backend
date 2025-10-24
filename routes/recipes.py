@@ -9,7 +9,6 @@ from typing import List, Optional
 # 🔧 Azure OpenAI Configuration
 # ---------------------------
 
-# Load .env only in local environment
 if os.getenv("RAILWAY_ENVIRONMENT") is None:
     from dotenv import load_dotenv
     load_dotenv()
@@ -17,38 +16,34 @@ if os.getenv("RAILWAY_ENVIRONMENT") is None:
 else:
     print("🚀 Running in Railway environment — using system variables")
 
-# Debug: Check environment variable availability
 print("🔍 Checking Azure environment variables:")
 print("  AZURE_OPENAI_KEY =", bool(os.getenv("AZURE_OPENAI_KEY")))
 print("  AZURE_OPENAI_ENDPOINT =", bool(os.getenv("AZURE_OPENAI_ENDPOINT")))
 print("  AZURE_OPENAI_DEPLOYMENT =", bool(os.getenv("AZURE_OPENAI_DEPLOYMENT")))
 
-# Initialize Azure OpenAI Client
 client = AzureOpenAI(
     api_key=os.getenv("AZURE_OPENAI_KEY"),
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_version="2024-08-01-preview"  # ✅ Updated API version
+    api_version="2024-08-01-preview"
 )
 
-deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")  # e.g., "gpt-4o" or "gpt-4o-mini"
+deployment = os.getenv("AZURE_OPENAI_DEPLOYMENT")
 
 # ---------------------------
 # 📦 FastAPI Router and Schemas
 # ---------------------------
-router = APIRouter(prefix="/recipes", tags=["Recipes"])
 
+router = APIRouter(prefix="/recipes", tags=["Recipes"])
 
 class Constraint(BaseModel):
     time_minutes: Optional[int] = None
     equipment: Optional[List[str]] = None
     cuisine: Optional[str] = None
 
-
 class Ingredient(BaseModel):
     name: str
     confidence: Optional[float] = None
     qty: Optional[str] = None
-
 
 class RecipeRequest(BaseModel):
     pantry: List[str]
@@ -57,13 +52,11 @@ class RecipeRequest(BaseModel):
     constraints: Optional[Constraint] = None
     mode: Optional[str] = "creative"
 
-
 class Nutrition(BaseModel):
     calories: float
     protein: float
     carbs: float
     fat: float
-
 
 class RecipeResponse(BaseModel):
     title: str
@@ -77,9 +70,10 @@ class RecipeResponse(BaseModel):
 
 
 # ---------------------------
-# 🧠 Recipe Generator Logic (Azure GPT)
+# 🧠 Recipe Generator Logic
 # ---------------------------
-def generate_mock_recipe(data: RecipeRequest) -> RecipeResponse:
+
+def generate_mock_recipe(data: RecipeRequest) -> dict:
     pantry_str = ", ".join(data.pantry)
     diet = data.diet or "normal"
     calorie_target = data.calorie_target or "unspecified"
@@ -100,8 +94,7 @@ def generate_mock_recipe(data: RecipeRequest) -> RecipeResponse:
       "confidence": 0.9,
       "explanation": "short reasoning"
     }}
-    Do not include any extra text, explanation, or markdown formatting.
-    Respond with only valid JSON.
+    Do not include markdown or extra text. Return only pure JSON.
     """
 
     try:
@@ -112,46 +105,41 @@ def generate_mock_recipe(data: RecipeRequest) -> RecipeResponse:
         )
 
         content = response.choices[0].message.content.strip()
+        print("🧠 Raw GPT response:", content[:400])
 
-        # ✅ Robust JSON extraction (handles markdown & extra text)
-        try:
-            json_start = content.find("{")
-            json_end = content.rfind("}") + 1
-            json_str = content[json_start:json_end]
+        # ✅ Robust JSON extraction
+        json_start = content.find("{")
+        json_end = content.rfind("}") + 1
+        json_str = content[json_start:json_end].replace("```json", "").replace("```", "").strip()
 
-            # Remove Markdown wrappers or extra formatting
-            json_str = json_str.replace("```json", "").replace("```", "").strip()
+        data_json = json.loads(json_str)
+        print("✅ Parsed recipe:", data_json)
 
-            data_json = json.loads(json_str)
-        except Exception as parse_err:
-            print("⚠️ JSON parse error:", parse_err)
-            print("🔍 Raw response content:", content)
-            raise Exception("Invalid JSON format from Azure GPT")
-
-        recipe = RecipeResponse(**data_json)
-        return recipe
+        return data_json  # return dict, not model (important!)
 
     except Exception as e:
         print("⚠️ Azure GPT error:", e)
-        return RecipeResponse(
-            title="Fallback Quick Dish",
-            ingredients=[Ingredient(name=i, qty="1 cup") for i in data.pantry],
-            instructions=["Mix ingredients and cook briefly."],
-            nutrition=Nutrition(calories=400, protein=20, carbs=40, fat=10),
-            missing_items=["salt", "oil"],
-            estimated_time_minutes=15,
-            confidence=0.6,
-            explanation="Fallback recipe (Azure GPT unavailable)."
-        )
-
+        # Return fallback recipe directly as dict
+        return {
+            "title": "Fallback Quick Dish",
+            "ingredients": [{"name": i, "qty": "1 cup"} for i in data.pantry],
+            "instructions": ["Mix ingredients and cook briefly."],
+            "nutrition": {"calories": 400, "protein": 20, "carbs": 40, "fat": 10},
+            "missing_items": ["salt", "oil"],
+            "estimated_time_minutes": 15,
+            "confidence": 0.6,
+            "explanation": "Fallback recipe (Azure GPT unavailable)."
+        }
 
 # ---------------------------
 # 🚀 API Endpoint
 # ---------------------------
-@router.post("/generate", response_model=RecipeResponse)
+
+@router.post("/generate")
 def generate_recipe(request: RecipeRequest):
     try:
         recipe = generate_mock_recipe(request)
-        return recipe
+        return recipe  # ✅ directly returns JSON-safe dict
     except Exception as e:
+        print("❌ Backend error:", e)
         raise HTTPException(status_code=500, detail=str(e))
